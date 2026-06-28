@@ -72,3 +72,7 @@ v11 round export update:
 - Final can export a detailed results image.
 - Consolation bracket can export a detailed results image.
 - Each export includes team logos, points, legs, level scores and winners in a tournament-branded image.
+
+
+v12 update:
+- Taikoo Hui is now displayed everywhere as HKRI Taikoo Hui, the official venue name.
