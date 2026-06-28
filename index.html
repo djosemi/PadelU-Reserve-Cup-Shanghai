@@ -443,6 +443,54 @@
       text-transform:uppercase;
       letter-spacing:.7px;
     }
+
+    .sync-status{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      padding:8px 11px;
+      font-size:11.5px;
+      font-weight:900;
+      color:white;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.22);
+      max-width:260px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sync-status.ok{background:rgba(22,132,78,.28);border-color:rgba(22,132,78,.55)}
+    .sync-status.warn{background:rgba(201,155,49,.26);border-color:rgba(201,155,49,.60)}
+    .sync-status.err{background:rgba(185,75,58,.30);border-color:rgba(185,75,58,.60)}
+    body.read-only .admin-only{display:none!important}
+    body.read-only .side input,
+    body.read-only .side select,
+    body.read-only .side button,
+    body.read-only #roundArea input,
+    body.read-only #roundArea select,
+    body.read-only #roundArea button{
+      pointer-events:none;
+      opacity:.58;
+      filter:saturate(.7);
+    }
+    body.read-only .tabs button,
+    body.read-only header .actions button{
+      pointer-events:auto;
+      opacity:1;
+      filter:none;
+    }
+    .readonly-banner{
+      margin:0 0 14px 0;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.92);
+      color:var(--navy);
+      border-left:5px solid var(--gold);
+      font-size:13px;
+      font-weight:800;
+      box-shadow:var(--shadow);
+    }
     .hidden{display:none}
     @media print{
       header,.side,.tabs,.no-print,button{display:none!important}
@@ -465,12 +513,16 @@
       </div>
     </div>
     <div class="actions">
+      <span id="syncStatus" class="sync-status">Connecting Firebase…</span>
+      <button class="secondary" id="loginBtn" onclick="loginAdmin()">Admin Login</button>
+      <button class="secondary hidden" id="logoutBtn" onclick="logoutAdmin()">Logout</button>
+      <button class="gold admin-only" onclick="saveRemoteNow()">Save Online Now</button>
       <button class="gold" onclick="exportBracketPNG()">Export Bracket PNG</button>
       <button class="gold" onclick="exportBracketPDF()">Export Bracket PDF</button>
-      <button class="secondary" onclick="exportData()">Export JSON</button>
-      <button class="secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+      <button class="secondary admin-only" onclick="exportData()">Export JSON</button>
+      <button class="secondary admin-only" onclick="document.getElementById('importFile').click()">Import JSON</button>
       <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
-      <button class="danger" onclick="resetApp()">Reset</button>
+      <button class="danger admin-only" onclick="resetApp()">Reset</button>
     </div>
   </div>
 </header>
@@ -520,6 +572,7 @@
     </aside>
 
     <section class="content">
+      <div id="readonlyBanner" class="readonly-banner hidden">Public view: results are loaded live from Firebase. Login as admin to edit and save online.</div>
       <div class="bracket-preview" id="bracketPreview">
         <div class="bracket-header">
           <div class="logos">
@@ -549,7 +602,36 @@
   </div>
 </main>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBM7qh7FJtEBObAmf8OK0d7vui95PDNUsw",
+  authDomain: "padelu-reserve-cup.firebaseapp.com",
+  projectId: "padelu-reserve-cup",
+  storageBucket: "padelu-reserve-cup.firebasestorage.app",
+  messagingSenderId: "989412874923",
+  appId: "1:989412874923:web:a87ff2438e17f0430475ee"
+};
+
+const FIREBASE_ADMIN_EMAIL = "djosemi@gmail.com";
+const FIRESTORE_COLLECTION = "tournaments";
+const FIRESTORE_DOCUMENT = "reserve-cup-2026";
+
+const firebaseApp = initializeApp(firebaseConfig);
+const firebaseAuth = getAuth(firebaseApp);
+const firebaseDb = getFirestore(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
+const tournamentRef = doc(firebaseDb, FIRESTORE_COLLECTION, FIRESTORE_DOCUMENT);
+
+let currentUser = null;
+let isAdmin = false;
+let isApplyingRemote = false;
+let remoteLoaded = false;
+let saveTimer = null;
+
 const ASSETS = {
   "Capital Square":"assets/capital-square-logo.jpg",
   "Jiuguang":"assets/jiuguang-logo.jpg",
@@ -615,7 +697,7 @@ let state = loadState();
 
 function loadState(){
   try{
-    const saved = JSON.parse(localStorage.getItem("reserveCupV7"));
+    const saved = JSON.parse(localStorage.getItem("reserveCupV9Firebase"));
     if(saved && saved.teams && saved.qf){
       if(!saved.consolation){
         saved.consolation={sf:[newTie("csf1","","","consolation"), newTie("csf2","","","consolation")], final:newTie("cfinal","","","consolation-final")};
@@ -631,15 +713,59 @@ function normalizeTeamsToLatest(){
   state.teams = state.teams.map(t => latest[t.id] ? {...t, captain:latest[t.id].captain, logo:latest[t.id].logo, zoom:latest[t.id].zoom} : t);
 }
 
-function save(){ localStorage.setItem("reserveCupV7", JSON.stringify(state)); }
-function resetApp(){ if(confirm("Reset all app data?")){ localStorage.removeItem("reserveCupV7"); state=defaultState(); render(); } }
+function updateWindowState(){ window.state = state; }
+
+function save(){
+  updateWindowState();
+  localStorage.setItem("reserveCupV9Firebase", JSON.stringify(state));
+  if(isAdmin && !isApplyingRemote){
+    queueRemoteSave();
+  }
+}
+
+function queueRemoteSave(){
+  clearTimeout(saveTimer);
+  setSyncStatus("Saving online…", "warn");
+  saveTimer = setTimeout(saveRemoteNow, 550);
+}
+
+async function saveRemoteNow(){
+  if(!isAdmin) return;
+  try{
+    await setDoc(tournamentRef, {
+      state,
+      updatedAt: serverTimestamp(),
+      updatedBy: currentUser ? currentUser.email : null
+    }, { merge:true });
+    setSyncStatus("Saved online", "ok");
+  }catch(error){
+    console.error("Firebase save error:", error);
+    setSyncStatus("Firebase save error", "err");
+    alert("Could not save online. Check Firebase rules and admin login.");
+  }
+}
+
+function resetApp(){
+  if(!isAdmin){ alert("Login as admin to reset."); return; }
+  if(confirm("Reset all app data? This will also save the reset online.")){
+    localStorage.removeItem("reserveCupV9Firebase");
+    state=defaultState();
+    updateWindowState();
+    save();
+    render();
+  }
+}
 
 function team(id){ return state.teams.find(t=>t.id===id) || {id:"", name:"TBD", captain:"", logo:""}; }
 function fmt(n){ return Number(n).toFixed(1).replace(".0",""); }
 function esc(str){ return String(str || "").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-function setSetting(k,v){ state.settings[k]=parseFloat(v); save(); render(); }
+function setSetting(k,v){
+  if(!isAdmin){ alert("Login as admin to edit."); render(); return; }
+  state.settings[k]=parseFloat(v); save(); render();
+}
 
 function setScore(obj,setKey,side,value){
+  if(!isAdmin){ alert("Login as admin to edit scores."); render(); return; }
   obj[setKey][side] = value;
   save();
   calculateAll();
@@ -757,6 +883,7 @@ function calculateAll(){
 }
 
 function applyManualBracket(){
+  if(!isAdmin){ alert("Login as admin to edit the bracket."); render(); return; }
   const used=[];
   state.qf.forEach((qf,i)=>{
     const a=document.getElementById(`qf${i}-a`).value;
@@ -776,11 +903,18 @@ function renderTeamEditor(){
     <div class="team-card">
       <img class="${t.zoom==='xl'?'logo-xl':''}" src="${t.logo}" alt="${esc(t.name)}">
       <div class="fields">
-        <input value="${esc(t.name)}" onchange="state.teams[${i}].name=this.value; save(); render()">
-        <input value="${esc(t.captain)}" onchange="state.teams[${i}].captain=this.value; save(); render()">
+        <input value="${esc(t.name)}" onchange="updateTeam(${i}, 'name', this.value)">
+        <input value="${esc(t.captain)}" onchange="updateTeam(${i}, 'captain', this.value)">
       </div>
     </div>
   `).join("");
+}
+
+function updateTeam(index, field, value){
+  if(!isAdmin){ alert("Login as admin to edit."); render(); return; }
+  state.teams[index][field] = value;
+  save();
+  render();
 }
 
 function teamOptions(selected){
@@ -830,7 +964,7 @@ function renderRound(){
     `;
   }
 }
-function showRound(r){ state.round=r; save(); renderRound(); }
+function showRound(r){ state.round=r; updateWindowState(); localStorage.setItem("reserveCupV9Firebase", JSON.stringify(state)); renderRound(); }
 
 function stageLabel(stage, idx){
   if(stage==="qf") return `QF ${idx+1}`;
@@ -1097,20 +1231,106 @@ function exportData(){
 }
 
 function importData(event){
+  if(!isAdmin){ alert("Login as admin to import."); return; }
   const file=event.target.files[0]; if(!file) return;
   const reader=new FileReader();
   reader.onload=e=>{
     try{
       state=JSON.parse(e.target.result);
+      updateWindowState();
       save(); render();
-      alert("Backup imported.");
+      alert("Backup imported and saved online.");
     }catch(err){ alert("Invalid JSON file."); }
   };
   reader.readAsText(file);
 }
 
+
+function setSyncStatus(text, type=""){
+  const el = document.getElementById("syncStatus");
+  if(!el) return;
+  el.textContent = text;
+  el.className = "sync-status" + (type ? " " + type : "");
+}
+
+function updateAuthUI(){
+  document.body.classList.toggle("read-only", !isAdmin);
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const banner = document.getElementById("readonlyBanner");
+  if(loginBtn) loginBtn.classList.toggle("hidden", !!currentUser);
+  if(logoutBtn) logoutBtn.classList.toggle("hidden", !currentUser);
+  if(banner) banner.classList.toggle("hidden", isAdmin);
+  if(currentUser && isAdmin){
+    setSyncStatus("Admin: " + currentUser.email, "ok");
+  }else if(currentUser && !isAdmin){
+    setSyncStatus("Signed in, read only", "warn");
+  }else{
+    setSyncStatus(remoteLoaded ? "Live public view" : "Loading Firebase…", remoteLoaded ? "ok" : "warn");
+  }
+}
+
+async function loginAdmin(){
+  try{
+    await signInWithPopup(firebaseAuth, googleProvider);
+  }catch(error){
+    console.error("Login error:", error);
+    alert("Google login failed. Check that djosemi.github.io is in Firebase Authorized domains.");
+  }
+}
+
+async function logoutAdmin(){
+  await signOut(firebaseAuth);
+}
+
+onAuthStateChanged(firebaseAuth, (user)=>{
+  currentUser = user;
+  isAdmin = !!user && user.email === FIREBASE_ADMIN_EMAIL;
+  updateAuthUI();
+  render();
+});
+
+onSnapshot(tournamentRef, (snapshot)=>{
+  if(snapshot.exists()){
+    const data = snapshot.data();
+    if(data && data.state){
+      isApplyingRemote = true;
+      state = data.state;
+      updateWindowState();
+      localStorage.setItem("reserveCupV9Firebase", JSON.stringify(state));
+      remoteLoaded = true;
+      normalizeTeamsToLatest();
+      calculateAll();
+      render();
+      isApplyingRemote = false;
+      if(!isAdmin) setSyncStatus("Live public view", "ok");
+    }else{
+      remoteLoaded = true;
+      if(isAdmin){
+        setSyncStatus("Firebase ready — make an edit to save initial state", "warn");
+      }else{
+        setSyncStatus("Waiting for admin data", "warn");
+      }
+      updateAuthUI();
+    }
+  }else{
+    remoteLoaded = true;
+    if(isAdmin){
+      setSyncStatus("Firebase ready — make an edit to create tournament", "warn");
+    }else{
+      setSyncStatus("No online data yet", "warn");
+    }
+    updateAuthUI();
+  }
+}, (error)=>{
+  console.error("Firebase load error:", error);
+  setSyncStatus("Firebase connection error", "err");
+});
+
 function render(){
   normalizeTeamsToLatest();
+  updateWindowState();
+  updateAuthUI();
   document.getElementById("homePts").value=state.settings.homePts;
   document.getElementById("awayPts").value=state.settings.awayPts;
   renderTeamEditor();
@@ -1119,7 +1339,29 @@ function render(){
   renderBracket();
   renderRound();
 }
+updateWindowState();
 render();
+
+Object.assign(window, {
+  loginAdmin,
+  logoutAdmin,
+  exportBracketPNG,
+  exportBracketPDF,
+  exportData,
+  importData,
+  resetApp,
+  setSetting,
+  applyManualBracket,
+  setScore,
+  findLeg,
+  tieObjById,
+  showRound,
+  updateTeam,
+  saveRemoteNow,
+  save,
+  calculateAll,
+  render
+});
 </script>
 </body>
 </html>

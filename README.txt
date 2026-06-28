@@ -43,3 +43,15 @@ v8 update:
 - Each logo is maximized inside the same standard square margin.
 - No logo is scaled outside its frame, so letters and icons are not cut off.
 - Moho, Jiuguang, Capital Square and Taikoo Hui now use tighter crops while preserving all text and icon elements.
+
+
+v9 Firebase update:
+- Connected to Firebase project padelu-reserve-cup.
+- Firestore path: tournaments / reserve-cup-2026.
+- Public visitors can read the live bracket without login.
+- Admin email djosemi@gmail.com can login with Google and edit/save online.
+- Added Admin Login / Logout / Save Online Now.
+- Keeps PNG/PDF export.
+- Keeps JSON backup.
+- Uses localStorage only as offline fallback/cache.
+- Upload the full folder to GitHub Pages, including assets/.
