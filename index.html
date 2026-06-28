@@ -494,6 +494,211 @@
     }
     .hidden{display:none}
 
+
+    .round-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+    }
+    .round-actions button{
+      padding:9px 12px;
+      font-size:11.5px;
+    }
+    .round-export-card{
+      width:1400px;
+      padding:38px;
+      color:white;
+      background:
+        linear-gradient(180deg,rgba(5,24,41,.76),rgba(5,24,41,.96)),
+        url("assets/reserve-cup-bg.jpeg") center center/cover;
+      border-radius:26px;
+      border:1px solid rgba(255,255,255,.28);
+      box-shadow:0 18px 54px rgba(0,0,0,.32);
+      font-family:var(--font);
+    }
+    .round-export-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:22px;
+      margin-bottom:24px;
+      border-bottom:1px solid rgba(255,255,255,.22);
+      padding-bottom:18px;
+    }
+    .round-export-brand{
+      display:flex;
+      align-items:center;
+      gap:18px;
+    }
+    .round-export-brand img.logo1{
+      width:82px;
+      height:82px;
+      object-fit:contain;
+    }
+    .round-export-brand img.logo2{
+      width:108px;
+      height:108px;
+      object-fit:contain;
+    }
+    .round-export-title h2{
+      margin:0;
+      font-size:54px;
+      line-height:.95;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+    .round-export-title span{
+      color:var(--gold2);
+    }
+    .round-export-sub{
+      color:var(--gold2);
+      font-weight:950;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+      margin-top:8px;
+    }
+    .round-export-meta{
+      text-align:right;
+      font-weight:950;
+      color:white;
+      text-transform:uppercase;
+      font-size:18px;
+      line-height:1.25;
+    }
+    .round-export-list{
+      display:grid;
+      gap:18px;
+    }
+    .round-export-list.two-col{
+      grid-template-columns:1fr 1fr;
+    }
+    .round-export-match{
+      overflow:hidden;
+      border-radius:18px;
+      border:1px solid rgba(232,199,108,.66);
+      background:rgba(3,22,38,.78);
+    }
+    .round-export-match-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      background:rgba(201,155,49,.18);
+      padding:12px 14px;
+      color:var(--gold2);
+      font-size:16px;
+      font-weight:950;
+      text-transform:uppercase;
+    }
+    .round-export-teams{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1px;
+      background:rgba(255,255,255,.10);
+    }
+    .round-export-team{
+      display:grid;
+      grid-template-columns:54px 1fr auto;
+      gap:12px;
+      align-items:center;
+      padding:12px 14px;
+      background:rgba(3,22,38,.92);
+    }
+    .round-export-team.won{
+      background:rgba(16,115,76,.54);
+    }
+    .round-export-team img{
+      width:54px;
+      height:54px;
+      object-fit:contain;
+      border-radius:12px;
+      background:white;
+    }
+    .round-export-team-name{
+      font-size:21px;
+      font-weight:950;
+      line-height:1.05;
+    }
+    .round-export-score{
+      font-size:24px;
+      color:white;
+      font-weight:950;
+      white-space:nowrap;
+    }
+    .round-export-legs{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1px;
+      background:rgba(255,255,255,.08);
+    }
+    .round-export-leg{
+      padding:12px 14px;
+      background:rgba(255,255,255,.06);
+    }
+    .round-export-leg-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:10px;
+      color:var(--gold2);
+      font-size:13px;
+      font-weight:950;
+      text-transform:uppercase;
+    }
+    .round-export-level{
+      display:grid;
+      grid-template-columns:78px 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:7px 0;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      font-size:14px;
+    }
+    .round-export-level:last-child{border-bottom:0}
+    .round-export-level b{
+      color:white;
+    }
+    .round-export-level .scoreline{
+      color:rgba(255,255,255,.86);
+      font-weight:850;
+    }
+    .round-export-level .winnerline{
+      color:var(--gold2);
+      font-weight:950;
+      text-align:right;
+    }
+    .round-export-footer{
+      margin-top:22px;
+      padding-top:15px;
+      border-top:1px solid rgba(255,255,255,.2);
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      align-items:center;
+      color:var(--gold2);
+      font-weight:950;
+      text-transform:uppercase;
+      letter-spacing:.7px;
+      font-size:18px;
+    }
+    .round-export-final-grid{
+      display:grid;
+      gap:14px;
+    }
+    @media(max-width:760px){
+      .round-actions{
+        width:100%;
+        justify-content:flex-start;
+        margin-top:10px;
+      }
+      .round-actions button{
+        flex:1 1 100%;
+        min-height:42px;
+      }
+    }
     @media(max-width:760px){
       header{
         position:relative;
@@ -1150,7 +1355,10 @@ function renderRound(){
     area.innerHTML=`
       <div class="round-title">
         <h2>Consolation Bracket</h2>
-        <span class="pill gold">QF losers · Consolation SF + Final</span>
+        <div class="round-actions">
+          <span class="pill gold">QF losers · Consolation SF + Final</span>
+          <button class="gold" onclick="exportRoundPNG('consolation')">Export Consolation Image</button>
+        </div>
       </div>
       ${csf.map((m,i)=>renderTieEditor(m,i)).join("")}
       <div class="round-title"><h2>Consolation Final</h2><span class="pill gold">Winner of consolation bracket</span></div>
@@ -1158,10 +1366,14 @@ function renderRound(){
     `;
   }else{
     const list = state.round==="qf" ? state.qf : state.sf;
+    const roundName = state.round==="qf" ? "Quarterfinals" : "Semifinals";
     area.innerHTML=`
       <div class="round-title">
-        <h2>${state.round==="qf" ? "Quarterfinals" : "Semifinals"}</h2>
-        <span class="pill gold">Home win ${fmt(state.settings.homePts)} pt · Away win ${fmt(state.settings.awayPts)} pts</span>
+        <h2>${roundName}</h2>
+        <div class="round-actions">
+          <span class="pill gold">Home win ${fmt(state.settings.homePts)} pt · Away win ${fmt(state.settings.awayPts)} pts</span>
+          <button class="gold" onclick="exportRoundPNG('${state.round}')">Export ${roundName} Image</button>
+        </div>
       </div>
       ${list.map((m,i)=>renderTieEditor(m,i)).join("")}
     `;
@@ -1278,7 +1490,10 @@ function renderFinalEditor(){
   return `
     <div class="round-title">
       <h2>Final · One East</h2>
-      <span class="pill gold">Unique final match</span>
+      <div class="round-actions">
+        <span class="pill gold">Unique final match</span>
+        <button class="gold" onclick="exportRoundPNG('final')">Export Final Image</button>
+      </div>
     </div>
     <div class="matchup">
       <div class="matchup-head">
@@ -1398,6 +1613,161 @@ function renderConsolationBracket(){
     </div>
   </div>`;
 }
+
+
+function roundExportTitle(round){
+  if(round==="qf") return {title:"Quarterfinals", sub:"Home & away · detailed results"};
+  if(round==="sf") return {title:"Semifinals", sub:"Home & away · detailed results"};
+  if(round==="final") return {title:"Final", sub:"One East · title match"};
+  if(round==="consolation") return {title:"Consolation Bracket", sub:"QF losers · consolation semifinals + final"};
+  return {title:"Round", sub:"Detailed results"};
+}
+
+function getRoundMatches(round){
+  if(round==="qf") return state.qf.map((m,i)=>({match:m, idx:i}));
+  if(round==="sf") return state.sf.map((m,i)=>({match:m, idx:i}));
+  if(round==="consolation"){
+    const matches = [];
+    (state.consolation?.sf || []).forEach((m,i)=>matches.push({match:m, idx:i}));
+    if(state.consolation?.final) matches.push({match:state.consolation.final, idx:0});
+    return matches;
+  }
+  return [];
+}
+
+function renderExportTeamBlock(t, won, score){
+  return `
+    <div class="round-export-team ${won ? "won" : ""}">
+      <img src="${t.logo || "assets/padelu-logo.png"}">
+      <div class="round-export-team-name">${esc(t.name)}</div>
+      <div class="round-export-score">${score}</div>
+    </div>
+  `;
+}
+
+function renderExportTie(match, idx){
+  const c = calcTie(match);
+  const a = team(match.aId);
+  const b = team(match.bId);
+  const label = stageLabel(match.stage, idx);
+  return `
+    <div class="round-export-match">
+      <div class="round-export-match-head">
+        <span>${label}</span>
+        <span>${c.winnerId ? "Winner: " + esc(team(c.winnerId).name) : c.ptsA===c.ptsB && c.ptsA>0 ? "Decider needed" : "Pending"}</span>
+      </div>
+      <div class="round-export-teams">
+        ${renderExportTeamBlock(a, match.aId===c.winnerId, `${fmt(c.ptsA)} pts`)}
+        ${renderExportTeamBlock(b, match.bId===c.winnerId, `${fmt(c.ptsB)} pts`)}
+      </div>
+      <div class="round-export-legs">
+        ${match.legs.map((leg,legIdx)=>renderExportLeg(match,leg,legIdx)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderExportLeg(match, leg, legIdx){
+  return `
+    <div class="round-export-leg">
+      <div class="round-export-leg-title">
+        <span>Leg ${legIdx+1}</span>
+        <span>${esc(team(leg.homeId).name)} home</span>
+      </div>
+      ${LEVELS.map(level=>renderExportLevel(leg, level)).join("")}
+    </div>
+  `;
+}
+
+function renderExportLevel(leg, level){
+  const score = leg.scores[level];
+  const r = calcMatch(score);
+  const winnerId = r.winner==="a" ? leg.homeId : r.winner==="b" ? leg.awayId : "";
+  return `
+    <div class="round-export-level">
+      <b>${level}</b>
+      <span class="scoreline">${scoreText(score)}</span>
+      <span class="winnerline">${winnerId ? esc(team(winnerId).name) : "Pending"}</span>
+    </div>
+  `;
+}
+
+function renderFinalExport(){
+  const f = state.final;
+  const c = calcFinal();
+  return `
+    <div class="round-export-match">
+      <div class="round-export-match-head">
+        <span>Final · One East</span>
+        <span>${c.winnerId ? "Champion: " + esc(team(c.winnerId).name) : "Pending"}</span>
+      </div>
+      <div class="round-export-teams">
+        ${renderExportTeamBlock(team(f.aId), f.aId===c.winnerId, `${c.winsA} wins`)}
+        ${renderExportTeamBlock(team(f.bId), f.bId===c.winnerId, `${c.winsB} wins`)}
+      </div>
+      <div class="round-export-final-grid" style="padding:14px;">
+        ${LEVELS.map(level=>{
+          const score = f.scores[level];
+          const r = calcMatch(score);
+          const winnerId = r.winner==="a" ? f.aId : r.winner==="b" ? f.bId : "";
+          return `
+            <div class="round-export-level" style="grid-template-columns:130px 1fr auto;">
+              <b>${level}</b>
+              <span class="scoreline">${scoreText(score)}</span>
+              <span class="winnerline">${winnerId ? esc(team(winnerId).name) : "Pending"}</span>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function buildRoundExportElement(round){
+  calculateAll();
+  const info = roundExportTitle(round);
+  const wrapper = document.createElement("div");
+  wrapper.className = "round-export-card";
+  wrapper.innerHTML = `
+    <div class="round-export-header">
+      <div class="round-export-brand">
+        <img class="logo1" src="assets/padelu-logo.png">
+        <img class="logo2" src="assets/reserve-cup-logo-transparent.png">
+        <div class="round-export-title">
+          <h2>PadelU <span>Reserve Cup</span></h2>
+          <div class="round-export-sub">Shanghai · ${esc(info.sub)}</div>
+        </div>
+      </div>
+      <div class="round-export-meta">${esc(info.title)}<br>Detailed Results</div>
+    </div>
+    <div class="round-export-list ${round==="qf" || round==="consolation" ? "two-col" : ""}">
+      ${round==="final" ? renderFinalExport() : getRoundMatches(round).map(({match,idx})=>renderExportTie(match,idx)).join("")}
+    </div>
+    <div class="round-export-footer">
+      <span>Represent your venue. Support your team. Win the city.</span>
+      <span>PadelU Reserve Cup · Shanghai</span>
+    </div>
+  `;
+  return wrapper;
+}
+
+async function exportRoundPNG(round){
+  const exportEl = buildRoundExportElement(round);
+  exportEl.style.position = "fixed";
+  exportEl.style.left = "-20000px";
+  exportEl.style.top = "0";
+  exportEl.style.zIndex = "-1";
+  document.body.appendChild(exportEl);
+  await new Promise(resolve => setTimeout(resolve, 250));
+  const canvas = await html2canvas(exportEl, {scale:2, useCORS:true, backgroundColor:null});
+  document.body.removeChild(exportEl);
+  const link = document.createElement("a");
+  const name = roundExportTitle(round).title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  link.download = `padelu-reserve-cup-${name}-detailed-results.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
 
 async function exportBracketPNG(){
   const el=document.getElementById("bracketPreview");
@@ -1550,6 +1920,7 @@ Object.assign(window, {
   logoutAdmin,
   exportBracketPNG,
   exportBracketPDF,
+  exportRoundPNG,
   exportData,
   importData,
   resetApp,

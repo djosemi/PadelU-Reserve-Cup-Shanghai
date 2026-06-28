@@ -63,3 +63,12 @@ v10 mobile update:
 - Header actions wrap into a clean two-column mobile layout.
 - Bracket and score cards are more compact and easier to read on phones.
 - Admin setup/team/manual bracket panels are moved below the main public bracket content.
+
+
+v11 round export update:
+- Added round-specific detailed image export buttons next to each result-entry section.
+- Quarterfinals can export a detailed results image.
+- Semifinals can export a detailed results image.
+- Final can export a detailed results image.
+- Consolation bracket can export a detailed results image.
+- Each export includes team logos, points, legs, level scores and winners in a tournament-branded image.
