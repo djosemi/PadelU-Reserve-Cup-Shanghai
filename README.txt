@@ -55,3 +55,11 @@ v9 Firebase update:
 - Keeps JSON backup.
 - Uses localStorage only as offline fallback/cache.
 - Upload the full folder to GitHub Pages, including assets/.
+
+
+v10 mobile update:
+- On mobile, the public bracket and match details are shown before admin setup panels.
+- Header is no longer sticky on small screens, avoiding overlap with content.
+- Header actions wrap into a clean two-column mobile layout.
+- Bracket and score cards are more compact and easier to read on phones.
+- Admin setup/team/manual bracket panels are moved below the main public bracket content.

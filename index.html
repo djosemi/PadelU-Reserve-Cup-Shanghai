@@ -99,7 +99,8 @@
     button.danger{background:var(--danger)}
     button.ghost{background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.25)}
     main{max-width:1540px; margin:0 auto; padding:22px}
-    .layout{display:grid; grid-template-columns:410px 1fr; gap:18px; align-items:start}
+    .layout{display:grid; grid-template-columns:minmax(0,1fr) 410px; gap:18px; align-items:start}
+    .content,.side{min-width:0}
     @media(max-width:1100px){.layout{grid-template-columns:1fr}}
     .panel{
       border-radius:22px;
@@ -492,6 +493,207 @@
       box-shadow:var(--shadow);
     }
     .hidden{display:none}
+
+    @media(max-width:760px){
+      header{
+        position:relative;
+        top:auto;
+      }
+      .topbar{
+        display:block;
+        padding:12px;
+      }
+      .brand{
+        gap:9px;
+        align-items:center;
+      }
+      .brand img.padelu{
+        width:42px;
+        height:42px;
+      }
+      .brand img.reserve{
+        width:58px;
+        height:58px;
+      }
+      h1{
+        font-size:20px;
+        line-height:1.08;
+        max-width:210px;
+      }
+      .subtitle{
+        font-size:10.5px;
+        line-height:1.2;
+        letter-spacing:.6px;
+      }
+      .actions{
+        margin-top:10px;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:8px;
+        width:100%;
+      }
+      .actions button,
+      .actions .btn{
+        width:100%;
+        justify-content:center;
+        min-height:44px;
+        padding:10px 10px;
+        font-size:12px;
+        box-shadow:0 6px 18px rgba(0,0,0,.16);
+      }
+      .sync-status{
+        grid-column:1 / -1;
+        width:100%;
+        max-width:none;
+        min-height:34px;
+      }
+      main{
+        padding:12px;
+      }
+      .layout{
+        gap:14px;
+      }
+      .bracket-preview{
+        padding:16px 12px;
+        border-radius:20px;
+      }
+      .bracket-header{
+        align-items:flex-start;
+        margin-bottom:14px;
+        gap:10px;
+      }
+      .bracket-header .logos{
+        gap:9px;
+        align-items:center;
+      }
+      .bracket-header img.logo1{
+        width:46px;
+        height:46px;
+      }
+      .bracket-header img.logo2{
+        width:62px;
+        height:62px;
+      }
+      .bracket-header h2{
+        font-size:30px;
+        line-height:.98;
+      }
+      .bracket-header .date{
+        display:none;
+      }
+      .bracket-grid{
+        gap:16px;
+      }
+      .bracket-col-title{
+        font-size:16px;
+        margin-top:6px;
+      }
+      .bracket-match{
+        min-height:104px;
+        border-radius:14px;
+      }
+      .br-team{
+        grid-template-columns:36px minmax(0,1fr) auto;
+        padding:7px 9px;
+      }
+      .br-team img{
+        width:34px;
+        height:34px;
+      }
+      .br-team .name{
+        font-size:14px;
+      }
+      .br-team .score{
+        font-size:12px;
+      }
+      .footer-line{
+        font-size:18px;
+        line-height:1.1;
+        margin-top:14px;
+      }
+      .export-note{
+        font-size:11px;
+        line-height:1.35;
+      }
+      .tabs{
+        gap:6px;
+        margin-top:14px!important;
+      }
+      .tabs button{
+        flex:1 1 46%;
+        padding:11px 8px;
+        font-size:12px;
+      }
+      .round-title{
+        display:block;
+        margin-bottom:10px;
+      }
+      .round-title h2{
+        font-size:30px;
+        margin-bottom:8px;
+      }
+      .matchup{
+        border-radius:20px;
+      }
+      .matchup-head{
+        display:block;
+        padding:14px;
+      }
+      .matchup-title{
+        font-size:18px;
+        line-height:1.2;
+        margin-bottom:6px;
+      }
+      .matchup-head .pill{
+        margin-top:10px;
+      }
+      .legs{
+        padding:10px;
+        gap:10px;
+      }
+      .level-box{
+        padding:10px;
+      }
+      .sets-grid{
+        grid-template-columns:90px repeat(3,1fr);
+        gap:5px;
+      }
+      .sets-grid .team-label{
+        font-size:12px;
+      }
+      .set-pair{
+        gap:3px;
+      }
+      .set-pair input{
+        min-width:0;
+        padding:7px 2px;
+        font-size:12px;
+      }
+      .summary{
+        grid-template-columns:1fr 1fr;
+        padding:10px;
+      }
+      .panel{
+        border-radius:20px;
+      }
+      .panel-body{
+        padding:12px;
+      }
+      .team-card{
+        grid-template-columns:66px 1fr;
+      }
+      .team-card img{
+        width:66px;
+        height:66px;
+      }
+      .vs-row{
+        grid-template-columns:1fr;
+      }
+      .vs{
+        width:100%;
+        padding:2px 0;
+      }
+    }
     @media print{
       header,.side,.tabs,.no-print,button{display:none!important}
       body{background:white}
@@ -529,6 +731,34 @@
 
 <main>
   <div class="layout">
+    <section class="content">
+      <div id="readonlyBanner" class="readonly-banner hidden">Public view: results are loaded live from Firebase. Login as admin to edit and save online.</div>
+      <div class="bracket-preview" id="bracketPreview">
+        <div class="bracket-header">
+          <div class="logos">
+            <img class="logo1" src="assets/padelu-logo.png" alt="PadelU">
+            <img class="logo2" src="assets/reserve-cup-logo-transparent.png" alt="Reserve Cup">
+            <div>
+              <h2>PadelU <span>Reserve Cup</span></h2>
+              <div class="subtitle">Shanghai · 8 venues · 3 levels · 1 champion</div>
+            </div>
+          </div>
+          <div class="date">Playoff bracket<br>Home & Away</div>
+        </div>
+        <div class="bracket-grid" id="bracketGrid"></div>
+        <div class="footer-line">Represent your venue. Support your team. Win the city.</div>
+        <div class="export-note">Export this view as PNG or PDF for WeChat, captains group, posters or score updates.</div>
+      </div>
+
+      <div class="tabs no-print" style="margin-top:18px">
+        <button class="tab active" onclick="showRound('qf')" id="tab-qf">Quarterfinals</button>
+        <button class="tab" onclick="showRound('sf')" id="tab-sf">Semifinals</button>
+        <button class="tab" onclick="showRound('final')" id="tab-final">Final</button>
+        <button class="tab" onclick="showRound('consolation')" id="tab-consolation">Consolation</button>
+      </div>
+
+      <div id="roundArea"></div>
+    </section>
     <aside class="side">
       <div class="panel">
         <div class="panel-title">Tournament setup <span class="pill gold">July 5–25</span></div>
@@ -571,34 +801,7 @@
       </div>
     </aside>
 
-    <section class="content">
-      <div id="readonlyBanner" class="readonly-banner hidden">Public view: results are loaded live from Firebase. Login as admin to edit and save online.</div>
-      <div class="bracket-preview" id="bracketPreview">
-        <div class="bracket-header">
-          <div class="logos">
-            <img class="logo1" src="assets/padelu-logo.png" alt="PadelU">
-            <img class="logo2" src="assets/reserve-cup-logo-transparent.png" alt="Reserve Cup">
-            <div>
-              <h2>PadelU <span>Reserve Cup</span></h2>
-              <div class="subtitle">Shanghai · 8 venues · 3 levels · 1 champion</div>
-            </div>
-          </div>
-          <div class="date">Playoff bracket<br>Home & Away</div>
-        </div>
-        <div class="bracket-grid" id="bracketGrid"></div>
-        <div class="footer-line">Represent your venue. Support your team. Win the city.</div>
-        <div class="export-note">Export this view as PNG or PDF for WeChat, captains group, posters or score updates.</div>
-      </div>
-
-      <div class="tabs no-print" style="margin-top:18px">
-        <button class="tab active" onclick="showRound('qf')" id="tab-qf">Quarterfinals</button>
-        <button class="tab" onclick="showRound('sf')" id="tab-sf">Semifinals</button>
-        <button class="tab" onclick="showRound('final')" id="tab-final">Final</button>
-        <button class="tab" onclick="showRound('consolation')" id="tab-consolation">Consolation</button>
-      </div>
-
-      <div id="roundArea"></div>
-    </section>
+    
   </div>
 </main>
 
