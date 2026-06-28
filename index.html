@@ -1118,7 +1118,19 @@ function loadState(){
 
 function normalizeTeamsToLatest(){
   const latest = Object.fromEntries(DEFAULT_TEAMS.map(t=>[t.id,t]));
-  state.teams = state.teams.map(t => latest[t.id] ? {...t, captain:latest[t.id].captain, logo:latest[t.id].logo, zoom:latest[t.id].zoom} : t);
+  state.teams = state.teams.map(t => {
+    if(!latest[t.id]) return t;
+    const next = {
+      ...t,
+      name: latest[t.id].name,
+      captain: latest[t.id].captain,
+      logo: latest[t.id].logo,
+      zoom: latest[t.id].zoom
+    };
+    if(next.id === "taikoo") next.name = "HKRI Taikoo Hui";
+    if(next.name === "Taikoo Hui") next.name = "HKRI Taikoo Hui";
+    return next;
+  });
 }
 
 function updateWindowState(){ window.state = state; }
@@ -1164,7 +1176,14 @@ function resetApp(){
   }
 }
 
-function team(id){ return state.teams.find(t=>t.id===id) || {id:"", name:"TBD", captain:"", logo:""}; }
+function team(id){
+  const found = state.teams.find(t=>t.id===id);
+  if(!found) return {id:"", name:"TBD", captain:"", logo:""};
+  if(found.id === "taikoo" || found.name === "Taikoo Hui"){
+    return {...found, name:"HKRI Taikoo Hui"};
+  }
+  return found;
+}
 function fmt(n){ return Number(n).toFixed(1).replace(".0",""); }
 function esc(str){ return String(str || "").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 function setSetting(k,v){
@@ -1320,6 +1339,9 @@ function renderTeamEditor(){
 
 function updateTeam(index, field, value){
   if(!isAdmin){ alert("Login as admin to edit."); render(); return; }
+  if(state.teams[index] && state.teams[index].id === "taikoo" && field === "name"){
+    value = "HKRI Taikoo Hui";
+  }
   state.teams[index][field] = value;
   save();
   render();

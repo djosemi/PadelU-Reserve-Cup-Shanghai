@@ -76,3 +76,8 @@ v11 round export update:
 
 v12 update:
 - Taikoo Hui is now displayed everywhere as HKRI Taikoo Hui, the official venue name.
+
+
+v13 update:
+- HKRI Taikoo Hui is now enforced everywhere, including if old Firebase or localStorage data still contains Taikoo Hui.
+- The app normalizes the team name by team id on every render and export.
