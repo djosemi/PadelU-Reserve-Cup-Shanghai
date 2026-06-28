@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PadelU Reserve Cup — Playoff Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <style>
+    :root{
+      --navy:#06233f;
+      --navy-soft:#0a3557;
+      --deep:#063d35;
+      --green:#0b5e4f;
+      --gold:#c99b31;
+      --gold2:#e8c76c;
+      --cream:#f6f1e4;
+      --white:#fff;
+      --line:rgba(255,255,255,.22);
+      --dark-line:rgba(6,35,63,.16);
+      --muted:#6f7b84;
+      --danger:#b94b3a;
+      --success:#16844e;
+      --shadow:0 16px 44px rgba(0,20,40,.18);
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--navy);
+      background:
+        linear-gradient(180deg, rgba(5,24,41,.62), rgba(4,48,42,.88)),
+        url("assets/reserve-cup-bg.jpeg") center top/cover fixed;
+      min-height:100vh;
+    }
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      background: radial-gradient(circle at top right, rgba(255,255,255,.28), transparent 28%),
+                  linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.22));
+      pointer-events:none;
+      z-index:-1;
+    }
+    header{
+      position:sticky; top:0; z-index:50;
+      background:rgba(5,24,41,.84);
+      backdrop-filter: blur(14px);
+      border-bottom:1px solid rgba(255,255,255,.16);
+    }
+    .topbar{
+      max-width:1540px;
+      margin:0 auto;
+      padding:14px 22px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+    .brand{display:flex; align-items:center; gap:14px}
+    .brand img.padelu{width:54px;height:54px;object-fit:contain}
+    .brand img.reserve{width:70px;height:70px;object-fit:contain}
+    h1{
+      margin:0;
+      font-size:26px;
+      line-height:1;
+      color:white;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+    .subtitle{
+      color:var(--gold2);
+      font-weight:800;
+      font-size:12px;
+      margin-top:5px;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+    }
+    .actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+    button,.btn{
+      border:0;
+      cursor:pointer;
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:12.5px;
+      font-weight:900;
+      color:white;
+      background:var(--navy);
+      box-shadow:0 5px 16px rgba(0,0,0,.18);
+      transition:.15s ease;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    button:hover,.btn:hover{transform:translateY(-1px)}
+    button.gold{background:linear-gradient(135deg,var(--gold),#a87722)}
+    button.secondary{background:rgba(255,255,255,.96); color:var(--navy)}
+    button.danger{background:var(--danger)}
+    button.ghost{background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.25)}
+    main{max-width:1540px; margin:0 auto; padding:22px}
+    .layout{display:grid; grid-template-columns:410px 1fr; gap:18px; align-items:start}
+    @media(max-width:1100px){.layout{grid-template-columns:1fr}}
+    .panel{
+      border-radius:22px;
+      background:rgba(255,255,255,.92);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.42);
+    }
+    .panel.dark{
+      background:rgba(5,24,41,.88);
+      color:white;
+      border:1px solid rgba(255,255,255,.20);
+    }
+    .panel-title{
+      background:linear-gradient(90deg,rgba(6,61,53,.98),rgba(6,35,63,.98));
+      color:white;
+      padding:14px 16px;
+      font-weight:950;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .panel-body{padding:16px}
+    .notice{
+      border-left:4px solid var(--gold);
+      border-radius:14px;
+      padding:12px;
+      background:#fff7df;
+      font-size:13px;
+      line-height:1.42;
+      margin-bottom:14px;
+    }
+    label{display:block; font-size:11px; color:var(--muted); font-weight:900; margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px}
+    input,select,textarea{
+      width:100%;
+      border:1px solid #d7dee0;
+      border-radius:12px;
+      padding:9px 10px;
+      font:inherit;
+      color:var(--navy);
+      background:white;
+      outline:none;
+    }
+    input:focus,select:focus{border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,155,49,.16)}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+    .team-editor{display:grid; gap:10px}
+    .team-card{
+      display:grid;
+      grid-template-columns:58px 1fr;
+      gap:10px;
+      padding:9px;
+      border:1px solid #dce2e1;
+      border-radius:16px;
+      background:#fbfaf5;
+      align-items:center;
+    }
+    .team-card img{
+      width:58px;height:58px; object-fit:contain;
+      border-radius:12px; background:white; border:1px solid #e5e5e5;
+      padding:0;
+    }
+    .team-card img.logo-xl{transform:none;}
+    .team-card .fields{display:grid; gap:6px}
+    .team-card input{padding:7px 9px; font-size:13px}
+    .pairings{display:grid; gap:10px}
+    .pairing-card{
+      border:1px solid #dfe4e5;
+      border-radius:16px;
+      background:#fff;
+      padding:12px;
+    }
+    .pairing-head{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:10px; font-weight:950; color:var(--green);
+    }
+    .vs-row{display:grid; grid-template-columns:1fr 42px 1fr; align-items:center; gap:8px}
+    .vs{font-weight:950;text-align:center;color:var(--gold)}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      padding:5px 10px;
+      background:#eef2ef;
+      color:var(--green);
+      font-weight:900;
+      font-size:11.5px;
+      white-space:nowrap;
+    }
+    .pill.gold{background:#fbefd0;color:#7a5614}
+    .pill.blue{background:#e9f1f7;color:var(--navy-soft)}
+    .pill.red{background:#ffe7e2;color:var(--danger)}
+    .pill.green{background:#e9f7ee;color:var(--success)}
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px}
+    .tab{background:rgba(255,255,255,.92); color:var(--navy)}
+    .tab.active{background:var(--gold); color:white}
+    .round-title{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:14px; color:white;
+    }
+    .round-title h2{margin:0; font-size:28px; text-transform:uppercase; letter-spacing:.6px}
+    .matchup{
+      background:rgba(255,255,255,.94);
+      border-radius:22px;
+      overflow:hidden;
+      margin-bottom:18px;
+      border:1px solid rgba(255,255,255,.45);
+      box-shadow:var(--shadow);
+    }
+    .matchup-head{
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      gap:12px;
+      padding:14px 16px;
+      background:linear-gradient(90deg,rgba(5,35,63,.98),rgba(6,61,53,.96));
+      color:white;
+    }
+    .matchup-title{font-size:18px; font-weight:950}
+    .matchup-sub{font-size:12px; color:rgba(255,255,255,.72); margin-top:3px}
+    .legs{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      padding:14px;
+    }
+    @media(max-width:1200px){.legs{grid-template-columns:1fr}}
+    .leg{
+      border:1px solid #dfe5e5;
+      border-radius:18px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .leg-head{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      padding:11px 12px;
+      background:linear-gradient(90deg,#fbf4dd,#eef5f1);
+      border-bottom:1px solid #e3e6e5;
+    }
+    .levels{display:grid; gap:10px; padding:12px}
+    .level-box{
+      border:1px solid #dde3e3;
+      border-radius:16px;
+      padding:12px;
+      background:#fcfbf6;
+    }
+    .level-top{
+      display:flex; justify-content:space-between; align-items:center;
+      gap:8px; margin-bottom:9px;
+    }
+    .level-name{font-weight:950}
+    .sets-grid{
+      display:grid;
+      grid-template-columns:72px repeat(3,1fr);
+      gap:7px;
+      align-items:end;
+    }
+    .sets-grid .team-label{
+      font-weight:900;
+      font-size:12px;
+      color:var(--navy);
+      padding-bottom:8px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .set-pair{
+      display:grid; grid-template-columns:1fr 1fr; gap:4px;
+    }
+    .set-pair input{
+      text-align:center;
+      font-weight:900;
+      padding:7px 4px;
+      font-size:13px;
+    }
+    .set-title{
+      grid-column:span 1;
+      font-size:10px;
+      font-weight:900;
+      text-transform:uppercase;
+      color:var(--muted);
+      text-align:center;
+      margin-bottom:-2px;
+    }
+    .winner-note{
+      margin-top:9px;
+      font-size:12px;
+      font-weight:950;
+      color:var(--muted);
+    }
+    .winner-note.win{color:var(--success)}
+    .summary{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
+      padding:14px;
+      border-top:1px solid #dfe5e5;
+      background:#f8faf8;
+    }
+    @media(max-width:900px){.summary{grid-template-columns:1fr 1fr}}
+    .metric{
+      border:1px solid #dce2e2;
+      border-radius:14px;
+      background:#fff;
+      padding:10px;
+    }
+    .metric .n{font-size:20px; font-weight:950}
+    .metric .k{font-size:10.5px; color:var(--muted); text-transform:uppercase; font-weight:800}
+    .tie-box{
+      padding:14px;
+      background:#fff8e4;
+      border-top:1px solid #ecd898;
+    }
+    .bracket-preview{
+      position:relative;
+      overflow:hidden;
+      border-radius:24px;
+      background:
+        linear-gradient(180deg,rgba(5,24,41,.72),rgba(5,24,41,.94)),
+        url("assets/reserve-cup-bg.jpeg") center center/cover;
+      padding:28px;
+      color:white;
+      border:1px solid rgba(255,255,255,.26);
+      box-shadow:var(--shadow);
+    }
+    .bracket-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:18px;
+      margin-bottom:20px;
+    }
+    .bracket-header .logos{display:flex; align-items:center; gap:14px}
+    .bracket-header img.logo1{width:74px;height:74px;object-fit:contain}
+    .bracket-header img.logo2{width:90px;height:90px;object-fit:contain}
+    .bracket-header h2{
+      margin:0;
+      font-size:38px;
+      text-transform:uppercase;
+      line-height:.95;
+      letter-spacing:1px;
+    }
+    .bracket-header h2 span{color:var(--gold2)}
+    .bracket-header .date{
+      text-align:right;
+      font-weight:950;
+      color:var(--gold2);
+      text-transform:uppercase;
+      letter-spacing:.7px;
+    }
+    .bracket-grid{
+      display:grid;
+      grid-template-columns:1.15fr .95fr .75fr;
+      gap:26px;
+      align-items:center;
+    }
+    @media(max-width:1050px){.bracket-grid{grid-template-columns:1fr}}
+    .consolation-section{grid-column:1 / -1; margin-top:8px; padding-top:18px; border-top:1px solid rgba(232,199,108,.45)}
+    .consolation-grid{display:grid; grid-template-columns:1.2fr .8fr; gap:26px; align-items:center}
+    @media(max-width:1050px){.consolation-grid{grid-template-columns:1fr}}
+    .bracket-col-title{
+      font-weight:950;
+      color:var(--gold2);
+      text-transform:uppercase;
+      letter-spacing:.9px;
+      margin-bottom:10px;
+      font-size:16px;
+    }
+    .bracket-list{display:grid; gap:10px}
+    .bracket-match{
+      background:rgba(3,22,38,.76);
+      border:1px solid rgba(232,199,108,.62);
+      border-radius:16px;
+      overflow:hidden;
+      min-height:112px;
+    }
+    .bracket-match .top{
+      padding:8px 10px;
+      background:rgba(201,155,49,.15);
+      display:flex;
+      justify-content:space-between;
+      font-size:11px;
+      font-weight:950;
+      text-transform:uppercase;
+      color:var(--gold2);
+    }
+    .br-team{
+      display:grid;
+      grid-template-columns:42px 1fr auto;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    .br-team:last-child{border-bottom:0}
+    .br-team img{
+      width:38px;height:38px;object-fit:contain;border-radius:9px;background:white;padding:0;
+    }
+    .br-team img.logo-xl{transform:none;}
+    .br-team .name{
+      font-size:13px;
+      font-weight:950;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .br-team .score{
+      font-weight:950;
+      color:white;
+      font-size:12px;
+      text-align:right;
+    }
+    .br-team.won{background:rgba(17,127,75,.28)}
+    .br-team.won .name{color:#fff}
+    .br-foot{
+      padding:6px 10px;
+      font-size:10.5px;
+      color:rgba(255,255,255,.76);
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .export-note{
+      font-size:11px;
+      color:rgba(255,255,255,.70);
+      margin-top:12px;
+    }
+    .footer-line{
+      margin-top:20px;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,.2);
+      text-align:center;
+      color:var(--gold2);
+      font-size:24px;
+      font-weight:950;
+      text-transform:uppercase;
+      letter-spacing:.7px;
+    }
+    .hidden{display:none}
+    @media print{
+      header,.side,.tabs,.no-print,button{display:none!important}
+      body{background:white}
+      main{padding:0;max-width:none}
+      .layout{display:block}
+      .bracket-preview{border-radius:0;box-shadow:none}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <img class="padelu" src="assets/padelu-logo.png" alt="PadelU">
+      <img class="reserve" src="assets/reserve-cup-logo-transparent.png" alt="Reserve Cup">
+      <div>
+        <h1>Reserve Cup Playoff Manager</h1>
+        <div class="subtitle">Manual QF bracket · Set-by-set results · Visual export</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="gold" onclick="exportBracketPNG()">Export Bracket PNG</button>
+      <button class="gold" onclick="exportBracketPDF()">Export Bracket PDF</button>
+      <button class="secondary" onclick="exportData()">Export JSON</button>
+      <button class="secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+      <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+      <button class="danger" onclick="resetApp()">Reset</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="layout">
+    <aside class="side">
+      <div class="panel">
+        <div class="panel-title">Tournament setup <span class="pill gold">July 5–25</span></div>
+        <div class="panel-body">
+          <div class="notice">
+            QF and SF are <b>home & away</b>. Enter every match set by set.
+            The app detects each level winner, adds home/away points and updates the bracket.
+          </div>
+          <div class="row">
+            <div>
+              <label>Home win</label>
+              <input id="homePts" type="number" step="0.5" value="1" onchange="setSetting('homePts', this.value)">
+            </div>
+            <div>
+              <label>Away win</label>
+              <input id="awayPts" type="number" step="0.5" value="1.5" onchange="setSetting('awayPts', this.value)">
+            </div>
+          </div>
+          <div style="height:10px"></div>
+          <button class="gold" onclick="applyManualBracket()">Apply QF bracket</button>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="panel">
+        <div class="panel-title">Teams & logos</div>
+        <div class="panel-body">
+          <div class="team-editor" id="teamEditor"></div>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="panel">
+        <div class="panel-title">Manual QF bracket</div>
+        <div class="panel-body">
+          <div class="pairings" id="pairingEditor"></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="bracket-preview" id="bracketPreview">
+        <div class="bracket-header">
+          <div class="logos">
+            <img class="logo1" src="assets/padelu-logo.png" alt="PadelU">
+            <img class="logo2" src="assets/reserve-cup-logo-transparent.png" alt="Reserve Cup">
+            <div>
+              <h2>PadelU <span>Reserve Cup</span></h2>
+              <div class="subtitle">Shanghai · 8 venues · 3 levels · 1 champion</div>
+            </div>
+          </div>
+          <div class="date">Playoff bracket<br>Home & Away</div>
+        </div>
+        <div class="bracket-grid" id="bracketGrid"></div>
+        <div class="footer-line">Represent your venue. Support your team. Win the city.</div>
+        <div class="export-note">Export this view as PNG or PDF for WeChat, captains group, posters or score updates.</div>
+      </div>
+
+      <div class="tabs no-print" style="margin-top:18px">
+        <button class="tab active" onclick="showRound('qf')" id="tab-qf">Quarterfinals</button>
+        <button class="tab" onclick="showRound('sf')" id="tab-sf">Semifinals</button>
+        <button class="tab" onclick="showRound('final')" id="tab-final">Final</button>
+        <button class="tab" onclick="showRound('consolation')" id="tab-consolation">Consolation</button>
+      </div>
+
+      <div id="roundArea"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const ASSETS = {
+  "Capital Square":"assets/capital-square-logo.jpg",
+  "Jiuguang":"assets/jiuguang-logo.jpg",
+  "Moho":"assets/moho-logo.jpg",
+  "Taikoo Hui":"assets/taikoo-logo.jpg",
+  "Anken":"assets/anken-logo.jpg",
+  "Xijiao Bailian":"assets/xijiao-logo.jpg",
+  "Sifec":"assets/sifec-logo.jpg",
+  "One East":"assets/one-east-logo.jpg"
+};
+
+const DEFAULT_TEAMS = [
+  {id:"anken", name:"Anken", captain:"Xiu", logo:"assets/anken-logo.jpg", zoom:"normal"},
+  {id:"sifec", name:"Sifec", captain:"Dàyú", logo:"assets/sifec-logo.jpg", zoom:"normal"},
+  {id:"moho", name:"Moho", captain:"Yun", logo:"assets/moho-logo.jpg", zoom:"xl"},
+  {id:"capital", name:"Capital Square", captain:"Allen", logo:"assets/capital-square-logo.jpg", zoom:"xl"},
+  {id:"taikoo", name:"Taikoo Hui", captain:"Josemi", logo:"assets/taikoo-logo.jpg", zoom:"xl"},
+  {id:"xijiao", name:"Xijiao Bailian", captain:"Jacob", logo:"assets/xijiao-logo.jpg", zoom:"normal"},
+  {id:"jiuguang", name:"Jiuguang", captain:"Yidane", logo:"assets/jiuguang-logo.jpg", zoom:"xl"},
+  {id:"oneeast", name:"One East", captain:"Michael", logo:"assets/one-east-logo.jpg", zoom:"normal"}
+];
+
+const LEVELS = ["1.0–2.0","2.0–3.0","3.0–4.0"];
+
+const blankSet = () => ({a:"", b:""});
+const blankScore = () => ({s1:blankSet(), s2:blankSet(), s3:blankSet()});
+
+function newLeg(homeId, awayId){
+  const scores = {};
+  LEVELS.forEach(l => scores[l] = blankScore());
+  return {homeId, awayId, date:"", venue:"", scores};
+}
+
+function newTie(id, aId="", bId="", stage="qf"){
+  return {
+    id, stage, aId, bId,
+    legs:[newLeg(aId,bId), newLeg(bId,aId)],
+    decider:{needed:false, level:"", winnerId:""},
+    winnerId:""
+  };
+}
+
+function defaultState(){
+  return {
+    settings:{homePts:1, awayPts:1.5},
+    teams:DEFAULT_TEAMS,
+    qf:[
+      newTie("qf1","anken","oneeast","qf"),
+      newTie("qf2","sifec","jiuguang","qf"),
+      newTie("qf3","moho","xijiao","qf"),
+      newTie("qf4","capital","taikoo","qf")
+    ],
+    sf:[newTie("sf1","","","sf"), newTie("sf2","","","sf")],
+    final:{id:"final", aId:"", bId:"", scores:Object.fromEntries(LEVELS.map(l=>[l,blankScore()])), decider:{needed:false,winnerId:""}, winnerId:""},
+    consolation:{
+      sf:[newTie("csf1","","","consolation"), newTie("csf2","","","consolation")],
+      final:newTie("cfinal","","","consolation-final")
+    },
+    round:"qf"
+  };
+}
+let state = loadState();
+
+function loadState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("reserveCupV7"));
+    if(saved && saved.teams && saved.qf){
+      if(!saved.consolation){
+        saved.consolation={sf:[newTie("csf1","","","consolation"), newTie("csf2","","","consolation")], final:newTie("cfinal","","","consolation-final")};
+      }
+      return saved;
+    }
+  }catch(e){}
+  return defaultState();
+}
+
+function normalizeTeamsToLatest(){
+  const latest = Object.fromEntries(DEFAULT_TEAMS.map(t=>[t.id,t]));
+  state.teams = state.teams.map(t => latest[t.id] ? {...t, captain:latest[t.id].captain, logo:latest[t.id].logo, zoom:latest[t.id].zoom} : t);
+}
+
+function save(){ localStorage.setItem("reserveCupV7", JSON.stringify(state)); }
+function resetApp(){ if(confirm("Reset all app data?")){ localStorage.removeItem("reserveCupV7"); state=defaultState(); render(); } }
+
+function team(id){ return state.teams.find(t=>t.id===id) || {id:"", name:"TBD", captain:"", logo:""}; }
+function fmt(n){ return Number(n).toFixed(1).replace(".0",""); }
+function esc(str){ return String(str || "").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function setSetting(k,v){ state.settings[k]=parseFloat(v); save(); render(); }
+
+function setScore(obj,setKey,side,value){
+  obj[setKey][side] = value;
+  save();
+  calculateAll();
+  renderBracket();
+  renderRound();
+}
+
+function calcMatch(score){
+  let aSets=0, bSets=0;
+  for(const key of ["s1","s2","s3"]){
+    const a = parseInt(score[key].a,10);
+    const b = parseInt(score[key].b,10);
+    if(Number.isNaN(a) || Number.isNaN(b)) continue;
+    if(score[key].a==="" || score[key].b==="") continue;
+    if(a>b) aSets++;
+    if(b>a) bSets++;
+  }
+  if(aSets>bSets) return {winner:"a", aSets, bSets, label:`${aSets}-${bSets}`};
+  if(bSets>aSets) return {winner:"b", aSets, bSets, label:`${aSets}-${bSets}`};
+  return {winner:"", aSets, bSets, label:"—"};
+}
+
+function scoreText(score){
+  const parts = [];
+  for(const key of ["s1","s2","s3"]){
+    if(score[key].a!=="" && score[key].b!=="") parts.push(`${score[key].a}-${score[key].b}`);
+  }
+  return parts.length ? parts.join(" ") : "—";
+}
+
+function calcTie(tieObj){
+  let ptsA=0, ptsB=0, winsA=0, winsB=0;
+  tieObj.legs.forEach((leg, legIdx)=>{
+    LEVELS.forEach(level=>{
+      const r = calcMatch(leg.scores[level]);
+      if(!r.winner) return;
+      const homeId = leg.homeId;
+      const awayId = leg.awayId;
+      const winnerId = r.winner==="a" ? homeId : awayId;
+      if(winnerId===tieObj.aId){ winsA++; ptsA += winnerId===homeId ? state.settings.homePts : state.settings.awayPts; }
+      if(winnerId===tieObj.bId){ winsB++; ptsB += winnerId===homeId ? state.settings.homePts : state.settings.awayPts; }
+    });
+  });
+  tieObj.decider.needed = false;
+  let winnerId="";
+  if(tieObj.aId && tieObj.bId){
+    if(ptsA>ptsB) winnerId=tieObj.aId;
+    else if(ptsB>ptsA) winnerId=tieObj.bId;
+    else if(ptsA>0 || ptsB>0){
+      tieObj.decider.needed = true;
+      winnerId = tieObj.decider.winnerId || "";
+    }
+  }
+  tieObj.winnerId=winnerId;
+  return {ptsA, ptsB, winsA, winsB, winnerId};
+}
+
+function loserOf(tieObj){
+  if(!tieObj.winnerId) return "";
+  return tieObj.winnerId===tieObj.aId ? tieObj.bId : tieObj.aId;
+}
+
+function syncTieLegs(tieObj){
+  tieObj.legs[0].homeId=tieObj.aId; tieObj.legs[0].awayId=tieObj.bId;
+  tieObj.legs[1].homeId=tieObj.bId; tieObj.legs[1].awayId=tieObj.aId;
+}
+
+function calcFinal(){
+  const f=state.final;
+  let winsA=0, winsB=0;
+  LEVELS.forEach(level=>{
+    const r=calcMatch(f.scores[level]);
+    if(r.winner==="a") winsA++;
+    if(r.winner==="b") winsB++;
+  });
+  f.decider.needed=false;
+  if(f.aId && f.bId){
+    if(winsA>winsB) f.winnerId=f.aId;
+    else if(winsB>winsA) f.winnerId=f.bId;
+    else if(winsA+winsB>0){ f.decider.needed=true; f.winnerId=f.decider.winnerId||""; }
+    else f.winnerId="";
+  }
+  return {winsA,winsB,winnerId:f.winnerId};
+}
+
+function calculateAll(){
+  state.qf.forEach(calcTie);
+  state.sf[0].aId=state.qf[0].winnerId||"";
+  state.sf[0].bId=state.qf[1].winnerId||"";
+  state.sf[1].aId=state.qf[2].winnerId||"";
+  state.sf[1].bId=state.qf[3].winnerId||"";
+  state.sf.forEach(sf=>{
+    sf.legs[0].homeId=sf.aId; sf.legs[0].awayId=sf.bId;
+    sf.legs[1].homeId=sf.bId; sf.legs[1].awayId=sf.aId;
+  });
+  state.sf.forEach(calcTie);
+  state.final.aId=state.sf[0].winnerId||"";
+  state.final.bId=state.sf[1].winnerId||"";
+  calcFinal();
+
+  if(!state.consolation){
+    state.consolation={sf:[newTie("csf1","","","consolation"), newTie("csf2","","","consolation")], final:newTie("cfinal","","","consolation-final")};
+  }
+  const qfLosers = state.qf.map(loserOf);
+  state.consolation.sf[0].aId=qfLosers[0]||"";
+  state.consolation.sf[0].bId=qfLosers[1]||"";
+  state.consolation.sf[1].aId=qfLosers[2]||"";
+  state.consolation.sf[1].bId=qfLosers[3]||"";
+  state.consolation.sf.forEach(syncTieLegs);
+  state.consolation.sf.forEach(calcTie);
+  state.consolation.final.aId=state.consolation.sf[0].winnerId||"";
+  state.consolation.final.bId=state.consolation.sf[1].winnerId||"";
+  syncTieLegs(state.consolation.final);
+  calcTie(state.consolation.final);
+}
+
+function applyManualBracket(){
+  const used=[];
+  state.qf.forEach((qf,i)=>{
+    const a=document.getElementById(`qf${i}-a`).value;
+    const b=document.getElementById(`qf${i}-b`).value;
+    if(a===b){ alert(`QF ${i+1}: choose two different teams.`); return; }
+    qf.aId=a; qf.bId=b;
+    qf.legs[0].homeId=a; qf.legs[0].awayId=b;
+    qf.legs[1].homeId=b; qf.legs[1].awayId=a;
+    used.push(a,b);
+  });
+  save(); calculateAll(); render();
+}
+
+function renderTeamEditor(){
+  const el=document.getElementById("teamEditor");
+  el.innerHTML=state.teams.map((t,i)=>`
+    <div class="team-card">
+      <img class="${t.zoom==='xl'?'logo-xl':''}" src="${t.logo}" alt="${esc(t.name)}">
+      <div class="fields">
+        <input value="${esc(t.name)}" onchange="state.teams[${i}].name=this.value; save(); render()">
+        <input value="${esc(t.captain)}" onchange="state.teams[${i}].captain=this.value; save(); render()">
+      </div>
+    </div>
+  `).join("");
+}
+
+function teamOptions(selected){
+  return state.teams.map(t=>`<option value="${t.id}" ${t.id===selected?"selected":""}>${esc(t.name)}</option>`).join("");
+}
+
+function renderPairingEditor(){
+  const el=document.getElementById("pairingEditor");
+  el.innerHTML=state.qf.map((qf,i)=>`
+    <div class="pairing-card">
+      <div class="pairing-head"><span>QF ${i+1}</span><span class="pill">Manual</span></div>
+      <div class="vs-row">
+        <select id="qf${i}-a">${teamOptions(qf.aId)}</select>
+        <div class="vs">vs</div>
+        <select id="qf${i}-b">${teamOptions(qf.bId)}</select>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderRound(){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  const tab=document.getElementById(`tab-${state.round}`); if(tab) tab.classList.add("active");
+  const area=document.getElementById("roundArea");
+  if(state.round==="final"){
+    area.innerHTML=renderFinalEditor();
+  }else if(state.round==="consolation"){
+    const csf = state.consolation?.sf || [];
+    const cf = state.consolation?.final ? [state.consolation.final] : [];
+    area.innerHTML=`
+      <div class="round-title">
+        <h2>Consolation Bracket</h2>
+        <span class="pill gold">QF losers · Consolation SF + Final</span>
+      </div>
+      ${csf.map((m,i)=>renderTieEditor(m,i)).join("")}
+      <div class="round-title"><h2>Consolation Final</h2><span class="pill gold">Winner of consolation bracket</span></div>
+      ${cf.map((m,i)=>renderTieEditor(m,i)).join("")}
+    `;
+  }else{
+    const list = state.round==="qf" ? state.qf : state.sf;
+    area.innerHTML=`
+      <div class="round-title">
+        <h2>${state.round==="qf" ? "Quarterfinals" : "Semifinals"}</h2>
+        <span class="pill gold">Home win ${fmt(state.settings.homePts)} pt · Away win ${fmt(state.settings.awayPts)} pts</span>
+      </div>
+      ${list.map((m,i)=>renderTieEditor(m,i)).join("")}
+    `;
+  }
+}
+function showRound(r){ state.round=r; save(); renderRound(); }
+
+function stageLabel(stage, idx){
+  if(stage==="qf") return `QF ${idx+1}`;
+  if(stage==="sf") return `SF ${idx+1}`;
+  if(stage==="consolation") return `Consolation SF ${idx+1}`;
+  if(stage==="consolation-final") return "Consolation Final";
+  return `${stage.toUpperCase()} ${idx+1}`;
+}
+
+function renderTieEditor(tieObj, idx){
+  const c=calcTie(tieObj);
+  return `
+    <div class="matchup">
+      <div class="matchup-head">
+        <div>
+          <div class="matchup-title">${stageLabel(tieObj.stage, idx)}: ${esc(team(tieObj.aId).name)} vs ${esc(team(tieObj.bId).name)}</div>
+          <div class="matchup-sub">Home & away · 3 level matches per leg · set-by-set scoring</div>
+        </div>
+        <span class="pill ${c.winnerId?"green":c.ptsA===c.ptsB&&c.ptsA>0?"red":"blue"}">${c.winnerId ? `${team(c.winnerId).name} advances` : c.ptsA===c.ptsB&&c.ptsA>0 ? "Decider needed" : "Pending"}</span>
+      </div>
+      <div class="legs">
+        ${tieObj.legs.map((leg,legIdx)=>renderLeg(tieObj,leg,legIdx)).join("")}
+      </div>
+      <div class="summary">
+        <div class="metric"><div class="n">${fmt(c.ptsA)}</div><div class="k">${esc(team(tieObj.aId).name)} points</div></div>
+        <div class="metric"><div class="n">${fmt(c.ptsB)}</div><div class="k">${esc(team(tieObj.bId).name)} points</div></div>
+        <div class="metric"><div class="n">${tieObj.decider.needed?"YES":"NO"}</div><div class="k">Decider needed</div></div>
+        <div class="metric"><div class="n">${c.winnerId ? esc(team(c.winnerId).name) : "TBD"}</div><div class="k">Winner</div></div>
+      </div>
+      ${tieObj.decider.needed ? renderDecider(tieObj) : ""}
+    </div>
+  `;
+}
+
+function renderLeg(tieObj,leg,legIdx){
+  return `
+    <div class="leg">
+      <div class="leg-head">
+        <div><b>Leg ${legIdx+1}</b><div class="small">${esc(team(leg.homeId).name)} home</div></div>
+        <span class="pill">${esc(team(leg.homeId).name)} vs ${esc(team(leg.awayId).name)}</span>
+      </div>
+      <div class="levels">
+        ${LEVELS.map(level=>renderLevelScore(tieObj,leg,legIdx,level)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderLevelScore(tieObj,leg,legIdx,level){
+  const score=leg.scores[level];
+  const result=calcMatch(score);
+  const winnerId=result.winner==="a" ? leg.homeId : result.winner==="b" ? leg.awayId : "";
+  const prefix=`${tieObj.id}-${legIdx}-${level}`;
+  return `
+    <div class="level-box">
+      <div class="level-top">
+        <div class="level-name">${level}</div>
+        <span class="pill ${result.winner?"green":"blue"}">${result.winner ? `${esc(team(winnerId).name)} wins` : "Pending"}</span>
+      </div>
+      <div class="sets-grid">
+        <div></div>
+        <div class="set-title">Set 1</div>
+        <div class="set-title">Set 2</div>
+        <div class="set-title">Set 3 / STB</div>
+        <div class="team-label">${esc(team(leg.homeId).name)}</div>
+        ${["s1","s2","s3"].map(s=>`<div class="set-pair"><input type="number" min="0" value="${score[s].a}" onchange="setScore(findLeg('${tieObj.id}',${legIdx}).scores['${level}'],'${s}','a',this.value)"><input type="number" min="0" value="${score[s].b}" onchange="setScore(findLeg('${tieObj.id}',${legIdx}).scores['${level}'],'${s}','b',this.value)"></div>`).join("")}
+        <div class="team-label">${esc(team(leg.awayId).name)}</div>
+        <div></div><div></div><div></div>
+      </div>
+      <div class="winner-note ${result.winner?"win":""}">Score: ${scoreText(score)} · Sets: ${result.label}</div>
+    </div>
+  `;
+}
+
+function findTie(id){
+  return [...state.qf, ...state.sf, ...(state.consolation?.sf||[]), ...(state.consolation?.final?[state.consolation.final]:[])].find(t=>t.id===id);
+}
+function findLeg(id, legIdx){ return findTie(id).legs[legIdx]; }
+
+function renderDecider(tieObj){
+  return `
+    <div class="tie-box">
+      <div class="row">
+        <div>
+          <label>Decider level</label>
+          <select onchange="tieObjById('${tieObj.id}').decider.level=this.value; save(); render()">
+            <option value="">Select level</option>
+            ${LEVELS.map(l=>`<option ${tieObj.decider.level===l?"selected":""}>${l}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label>Super Tiebreak winner</label>
+          <select onchange="tieObjById('${tieObj.id}').decider.winnerId=this.value; save(); calculateAll(); render()">
+            <option value="">Select winner</option>
+            <option value="${tieObj.aId}" ${tieObj.decider.winnerId===tieObj.aId?"selected":""}>${esc(team(tieObj.aId).name)}</option>
+            <option value="${tieObj.bId}" ${tieObj.decider.winnerId===tieObj.bId?"selected":""}>${esc(team(tieObj.bId).name)}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function tieObjById(id){ return findTie(id); }
+
+function renderFinalEditor(){
+  const f=state.final;
+  const c=calcFinal();
+  return `
+    <div class="round-title">
+      <h2>Final · One East</h2>
+      <span class="pill gold">Unique final match</span>
+    </div>
+    <div class="matchup">
+      <div class="matchup-head">
+        <div>
+          <div class="matchup-title">${esc(team(f.aId).name)} vs ${esc(team(f.bId).name)}</div>
+          <div class="matchup-sub">Enter each level match set by set</div>
+        </div>
+        <span class="pill ${c.winnerId?"gold":"blue"}">${c.winnerId ? `${esc(team(c.winnerId).name)} champion` : "Pending"}</span>
+      </div>
+      <div class="levels">
+        ${LEVELS.map(level=>renderFinalLevel(level)).join("")}
+      </div>
+      <div class="summary">
+        <div class="metric"><div class="n">${c.winsA}</div><div class="k">${esc(team(f.aId).name)} match wins</div></div>
+        <div class="metric"><div class="n">${c.winsB}</div><div class="k">${esc(team(f.bId).name)} match wins</div></div>
+        <div class="metric"><div class="n">${f.decider.needed?"YES":"NO"}</div><div class="k">Decider needed</div></div>
+        <div class="metric"><div class="n">${c.winnerId ? esc(team(c.winnerId).name) : "TBD"}</div><div class="k">Champion</div></div>
+      </div>
+      ${f.decider.needed ? `
+      <div class="tie-box">
+        <label>Final Super Tiebreak winner</label>
+        <select onchange="state.final.decider.winnerId=this.value; save(); calculateAll(); render()">
+          <option value="">Select winner</option>
+          <option value="${f.aId}" ${f.decider.winnerId===f.aId?"selected":""}>${esc(team(f.aId).name)}</option>
+          <option value="${f.bId}" ${f.decider.winnerId===f.bId?"selected":""}>${esc(team(f.bId).name)}</option>
+        </select>
+      </div>` : ""}
+    </div>
+  `;
+}
+
+function renderFinalLevel(level){
+  const f=state.final;
+  const score=f.scores[level];
+  const r=calcMatch(score);
+  const winnerId=r.winner==="a" ? f.aId : r.winner==="b" ? f.bId : "";
+  return `
+    <div class="level-box">
+      <div class="level-top">
+        <div class="level-name">${level}</div>
+        <span class="pill ${r.winner?"green":"blue"}">${r.winner ? `${esc(team(winnerId).name)} wins` : "Pending"}</span>
+      </div>
+      <div class="sets-grid">
+        <div></div>
+        <div class="set-title">Set 1</div>
+        <div class="set-title">Set 2</div>
+        <div class="set-title">Set 3 / STB</div>
+        <div class="team-label">${esc(team(f.aId).name)}</div>
+        ${["s1","s2","s3"].map(s=>`<div class="set-pair"><input type="number" min="0" value="${score[s].a}" onchange="setScore(state.final.scores['${level}'],'${s}','a',this.value)"><input type="number" min="0" value="${score[s].b}" onchange="setScore(state.final.scores['${level}'],'${s}','b',this.value)"></div>`).join("")}
+        <div class="team-label">${esc(team(f.bId).name)}</div>
+        <div></div><div></div><div></div>
+      </div>
+      <div class="winner-note ${r.winner?"win":""}">Score: ${scoreText(score)} · Sets: ${r.label}</div>
+    </div>
+  `;
+}
+
+function renderBracket(){
+  calculateAll();
+  const grid=document.getElementById("bracketGrid");
+  grid.innerHTML = `
+    ${renderBracketColumn("Quarterfinals",state.qf)}
+    ${renderBracketColumn("Semifinals",state.sf)}
+    ${renderFinalBracket()}
+    ${renderConsolationBracket()}
+  `;
+}
+
+function renderBracketColumn(title, arr){
+  return `<div><div class="bracket-col-title">${title}</div><div class="bracket-list">${arr.map(m=>renderBracketMatch(m)).join("")}</div></div>`;
+}
+
+function renderBracketMatch(m){
+  const c=calcTie(m);
+  const a=team(m.aId), b=team(m.bId);
+  return `
+    <div class="bracket-match">
+      <div class="top"><span>${m.stage.toUpperCase()} ${m.id.replace(/[^0-9]/g,"")}</span><span>H/A</span></div>
+      ${renderBracketTeam(a,m.aId===c.winnerId, `${fmt(c.ptsA)} pts`)}
+      ${renderBracketTeam(b,m.bId===c.winnerId, `${fmt(c.ptsB)} pts`)}
+      <div class="br-foot"><span>L1 + L2 aggregate</span><span>${c.winnerId ? "Winner: "+team(c.winnerId).name : c.ptsA===c.ptsB&&c.ptsA>0 ? "Decider needed" : "Pending"}</span></div>
+    </div>
+  `;
+}
+
+function renderBracketTeam(t, won, score){
+  return `
+    <div class="br-team ${won?"won":""}">
+      <img class="${t.zoom==='xl'?'logo-xl':''}" src="${t.logo || "assets/padelu-logo.png"}">
+      <div class="name">${esc(t.name)}</div>
+      <div class="score">${score}</div>
+    </div>
+  `;
+}
+
+function renderFinalBracket(){
+  const f=state.final;
+  const c=calcFinal();
+  return `<div><div class="bracket-col-title">Final · One East</div><div class="bracket-list">
+    <div class="bracket-match">
+      <div class="top"><span>Final</span><span>Unique match</span></div>
+      ${renderBracketTeam(team(f.aId), f.aId===c.winnerId, `${c.winsA} wins`)}
+      ${renderBracketTeam(team(f.bId), f.bId===c.winnerId, `${c.winsB} wins`)}
+      <div class="br-foot"><span>Best of 3 level matches</span><span>${c.winnerId ? "Champion: "+team(c.winnerId).name : "Pending"}</span></div>
+    </div>
+  </div></div>`;
+}
+
+function renderConsolationBracket(){
+  const csf = state.consolation?.sf || [];
+  const cfinal = state.consolation?.final;
+  return `<div class="consolation-section">
+    <div class="bracket-col-title">Consolation Bracket · QF Losers</div>
+    <div class="consolation-grid">
+      <div class="bracket-list">${csf.map(m=>renderBracketMatch(m)).join("")}</div>
+      <div class="bracket-list">${cfinal ? renderBracketMatch(cfinal) : ""}</div>
+    </div>
+  </div>`;
+}
+
+async function exportBracketPNG(){
+  const el=document.getElementById("bracketPreview");
+  const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:null});
+  const link=document.createElement("a");
+  link.download="padelu-reserve-cup-bracket.png";
+  link.href=canvas.toDataURL("image/png");
+  link.click();
+}
+
+async function exportBracketPDF(){
+  const el=document.getElementById("bracketPreview");
+  const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:null});
+  const img=canvas.toDataURL("image/png");
+  const { jsPDF } = window.jspdf;
+  const pdf=new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
+  const pageW=pdf.internal.pageSize.getWidth();
+  const pageH=pdf.internal.pageSize.getHeight();
+  const ratio=Math.min(pageW/canvas.width,pageH/canvas.height);
+  const w=canvas.width*ratio;
+  const h=canvas.height*ratio;
+  pdf.addImage(img,"PNG",(pageW-w)/2,(pageH-h)/2,w,h);
+  pdf.save("padelu-reserve-cup-bracket.pdf");
+}
+
+function exportData(){
+  save();
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="reserve-cup-results-backup.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event){
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      state=JSON.parse(e.target.result);
+      save(); render();
+      alert("Backup imported.");
+    }catch(err){ alert("Invalid JSON file."); }
+  };
+  reader.readAsText(file);
+}
+
+function render(){
+  normalizeTeamsToLatest();
+  document.getElementById("homePts").value=state.settings.homePts;
+  document.getElementById("awayPts").value=state.settings.awayPts;
+  renderTeamEditor();
+  renderPairingEditor();
+  calculateAll();
+  renderBracket();
+  renderRound();
+}
+render();
+</script>
+</body>
+</html>
