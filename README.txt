@@ -81,3 +81,14 @@ v12 update:
 v13 update:
 - HKRI Taikoo Hui is now enforced everywhere, including if old Firebase or localStorage data still contains Taikoo Hui.
 - The app normalizes the team name by team id on every render and export.
+
+
+v14 update:
+- Quarterfinal bracket is now locked and cannot be edited manually.
+- Manual QF bracket admin panel has been removed.
+- Fixed QF pairings:
+  QF1: Xijiao Bailian vs HKRI Taikoo Hui
+  QF2: Anken vs Moho
+  QF3: Jiuguang vs Capital Square
+  QF4: SIFEC vs One East
+- The app enforces these QF pairings even if older Firebase/local data still contains the previous bracket.

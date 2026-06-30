@@ -916,7 +916,7 @@
       <img class="reserve" src="assets/reserve-cup-logo-transparent.png" alt="Reserve Cup">
       <div>
         <h1>Reserve Cup Playoff Manager</h1>
-        <div class="subtitle">Manual QF bracket · Set-by-set results · Visual export</div>
+        <div class="subtitle">Locked QF bracket · Set-by-set results · Visual export</div>
       </div>
     </div>
     <div class="actions">
@@ -969,8 +969,7 @@
         <div class="panel-title">Tournament setup <span class="pill gold">July 5–25</span></div>
         <div class="panel-body">
           <div class="notice">
-            QF and SF are <b>home & away</b>. Enter every match set by set.
-            The app detects each level winner, adds home/away points and updates the bracket.
+            QF bracket is now <b>locked</b>. Results can be entered set by set, and the app will update the main and consolation brackets automatically.
           </div>
           <div class="row">
             <div>
@@ -982,8 +981,6 @@
               <input id="awayPts" type="number" step="0.5" value="1.5" onchange="setSetting('awayPts', this.value)">
             </div>
           </div>
-          <div style="height:10px"></div>
-          <button class="gold" onclick="applyManualBracket()">Apply QF bracket</button>
         </div>
       </div>
 
@@ -993,15 +990,6 @@
         <div class="panel-title">Teams & logos</div>
         <div class="panel-body">
           <div class="team-editor" id="teamEditor"></div>
-        </div>
-      </div>
-
-      <div style="height:16px"></div>
-
-      <div class="panel">
-        <div class="panel-title">Manual QF bracket</div>
-        <div class="panel-body">
-          <div class="pairings" id="pairingEditor"></div>
         </div>
       </div>
     </aside>
@@ -1087,10 +1075,10 @@ function defaultState(){
     settings:{homePts:1, awayPts:1.5},
     teams:DEFAULT_TEAMS,
     qf:[
-      newTie("qf1","anken","oneeast","qf"),
-      newTie("qf2","sifec","jiuguang","qf"),
-      newTie("qf3","moho","xijiao","qf"),
-      newTie("qf4","capital","taikoo","qf")
+      newTie("qf1","xijiao","taikoo","qf"),
+      newTie("qf2","anken","moho","qf"),
+      newTie("qf3","jiuguang","capital","qf"),
+      newTie("qf4","sifec","oneeast","qf")
     ],
     sf:[newTie("sf1","","","sf"), newTie("sf2","","","sf")],
     final:{id:"final", aId:"", bId:"", scores:Object.fromEntries(LEVELS.map(l=>[l,blankScore()])), decider:{needed:false,winnerId:""}, winnerId:""},
@@ -1130,6 +1118,33 @@ function normalizeTeamsToLatest(){
     if(next.id === "taikoo") next.name = "HKRI Taikoo Hui";
     if(next.name === "Taikoo Hui") next.name = "HKRI Taikoo Hui";
     return next;
+  });
+}
+
+function enforceFixedQFBracket(){
+  const fixed = [
+    ["qf1","xijiao","taikoo"],
+    ["qf2","anken","moho"],
+    ["qf3","jiuguang","capital"],
+    ["qf4","sifec","oneeast"]
+  ];
+  if(!state.qf || state.qf.length !== 4){
+    state.qf = fixed.map(([id,a,b]) => newTie(id,a,b,"qf"));
+  }
+  fixed.forEach(([id,a,b], index) => {
+    const qf = state.qf[index] || newTie(id,a,b,"qf");
+    qf.id = id;
+    qf.stage = "qf";
+    qf.aId = a;
+    qf.bId = b;
+    if(!qf.legs || qf.legs.length !== 2){
+      qf.legs = [newLeg(a,b), newLeg(b,a)];
+    }
+    qf.legs[0].homeId = a;
+    qf.legs[0].awayId = b;
+    qf.legs[1].homeId = b;
+    qf.legs[1].awayId = a;
+    state.qf[index] = qf;
   });
 }
 
@@ -1310,18 +1325,7 @@ function calculateAll(){
 }
 
 function applyManualBracket(){
-  if(!isAdmin){ alert("Login as admin to edit the bracket."); render(); return; }
-  const used=[];
-  state.qf.forEach((qf,i)=>{
-    const a=document.getElementById(`qf${i}-a`).value;
-    const b=document.getElementById(`qf${i}-b`).value;
-    if(a===b){ alert(`QF ${i+1}: choose two different teams.`); return; }
-    qf.aId=a; qf.bId=b;
-    qf.legs[0].homeId=a; qf.legs[0].awayId=b;
-    qf.legs[1].homeId=b; qf.legs[1].awayId=a;
-    used.push(a,b);
-  });
-  save(); calculateAll(); render();
+  alert("The QF bracket is locked and can no longer be changed manually.");
 }
 
 function renderTeamEditor(){
@@ -1352,17 +1356,7 @@ function teamOptions(selected){
 }
 
 function renderPairingEditor(){
-  const el=document.getElementById("pairingEditor");
-  el.innerHTML=state.qf.map((qf,i)=>`
-    <div class="pairing-card">
-      <div class="pairing-head"><span>QF ${i+1}</span><span class="pill">Manual</span></div>
-      <div class="vs-row">
-        <select id="qf${i}-a">${teamOptions(qf.aId)}</select>
-        <div class="vs">vs</div>
-        <select id="qf${i}-b">${teamOptions(qf.bId)}</select>
-      </div>
-    </div>
-  `).join("");
+  // QF bracket is locked; manual pairing editor has been removed.
 }
 
 function renderRound(){
@@ -1895,6 +1889,7 @@ onSnapshot(tournamentRef, (snapshot)=>{
       localStorage.setItem("reserveCupV9Firebase", JSON.stringify(state));
       remoteLoaded = true;
       normalizeTeamsToLatest();
+      enforceFixedQFBracket();
       calculateAll();
       render();
       isApplyingRemote = false;
@@ -1924,6 +1919,7 @@ onSnapshot(tournamentRef, (snapshot)=>{
 
 function render(){
   normalizeTeamsToLatest();
+  enforceFixedQFBracket();
   updateWindowState();
   updateAuthUI();
   document.getElementById("homePts").value=state.settings.homePts;
