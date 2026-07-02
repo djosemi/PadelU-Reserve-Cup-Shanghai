@@ -98,3 +98,10 @@ v15 update:
 - Replaced Jiuguang team logo with the new guitar logo.
 - Header title changed to RESERVE CUP SHANGHAI PLAYOFF.
 - Removed the header subtitle line.
+
+
+v16 update:
+- Teams no longer advance to the next round until all Leg 1 and Leg 2 level results are complete.
+- While a tie is incomplete, the app shows On going and, when possible, Provisional Winner.
+- Once all results are complete, the app shows Winner and advances the team.
+- Bracket, results tables, consolation bracket and round exports use the same logic.

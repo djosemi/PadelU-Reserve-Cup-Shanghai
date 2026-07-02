@@ -1237,12 +1237,55 @@ function scoreText(score){
   return parts.length ? parts.join(" ") : "—";
 }
 
+
+function isMatchComplete(score){
+  const r = calcMatch(score);
+  let completedSets = 0;
+  for(const key of ["s1","s2","s3"]){
+    if(score[key].a !== "" && score[key].b !== "") completedSets++;
+  }
+  // A level match is complete when it has a real winner:
+  // 2-0 after two sets, or 2-1 after the third set / super tiebreak.
+  return !!r.winner && completedSets >= 2 && r.aSets !== r.bSets;
+}
+
+function isTieFullyComplete(tieObj){
+  if(!tieObj.aId || !tieObj.bId) return false;
+  return tieObj.legs.every(leg =>
+    LEVELS.every(level => isMatchComplete(leg.scores[level]))
+  );
+}
+
+function provisionalTieLeader(ptsA, ptsB, winsA, winsB, tieObj){
+  if(ptsA > ptsB) return tieObj.aId;
+  if(ptsB > ptsA) return tieObj.bId;
+  if(winsA > winsB) return tieObj.aId;
+  if(winsB > winsA) return tieObj.bId;
+  return "";
+}
+
+function tieStatusLabel(c){
+  if(c.isComplete){
+    if(c.winnerId) return "Winner: " + esc(team(c.winnerId).name);
+    if(c.deciderNeeded) return "Decider needed";
+    return "Pending";
+  }
+  if(c.provisionalWinnerId){
+    return "On going · Provisional Winner: " + esc(team(c.provisionalWinnerId).name);
+  }
+  return "On going";
+}
+
 function calcTie(tieObj){
   let ptsA=0, ptsB=0, winsA=0, winsB=0;
+  let completedMatches = 0;
   tieObj.legs.forEach((leg, legIdx)=>{
     LEVELS.forEach(level=>{
-      const r = calcMatch(leg.scores[level]);
+      const score = leg.scores[level];
+      if(!isMatchComplete(score)) return;
+      const r = calcMatch(score);
       if(!r.winner) return;
+      completedMatches++;
       const homeId = leg.homeId;
       const awayId = leg.awayId;
       const winnerId = r.winner==="a" ? homeId : awayId;
@@ -1250,18 +1293,34 @@ function calcTie(tieObj){
       if(winnerId===tieObj.bId){ winsB++; ptsB += winnerId===homeId ? state.settings.homePts : state.settings.awayPts; }
     });
   });
+
+  const isComplete = isTieFullyComplete(tieObj);
+  const provisionalWinnerId = provisionalTieLeader(ptsA, ptsB, winsA, winsB, tieObj);
   tieObj.decider.needed = false;
   let winnerId="";
-  if(tieObj.aId && tieObj.bId){
+
+  if(tieObj.aId && tieObj.bId && isComplete){
     if(ptsA>ptsB) winnerId=tieObj.aId;
     else if(ptsB>ptsA) winnerId=tieObj.bId;
-    else if(ptsA>0 || ptsB>0){
+    else{
       tieObj.decider.needed = true;
       winnerId = tieObj.decider.winnerId || "";
     }
   }
+
   tieObj.winnerId=winnerId;
-  return {ptsA, ptsB, winsA, winsB, winnerId};
+  return {
+    ptsA,
+    ptsB,
+    winsA,
+    winsB,
+    winnerId,
+    provisionalWinnerId,
+    isComplete,
+    completedMatches,
+    totalMatches: tieObj.legs.length * LEVELS.length,
+    deciderNeeded: tieObj.decider.needed
+  };
 }
 
 function loserOf(tieObj){
@@ -1276,20 +1335,25 @@ function syncTieLegs(tieObj){
 
 function calcFinal(){
   const f=state.final;
-  let winsA=0, winsB=0;
+  let winsA=0, winsB=0, completedMatches=0;
   LEVELS.forEach(level=>{
-    const r=calcMatch(f.scores[level]);
+    const score = f.scores[level];
+    if(!isMatchComplete(score)) return;
+    const r=calcMatch(score);
+    completedMatches++;
     if(r.winner==="a") winsA++;
     if(r.winner==="b") winsB++;
   });
+  const isComplete = !!f.aId && !!f.bId && LEVELS.every(level=>isMatchComplete(f.scores[level]));
+  const provisionalWinnerId = winsA>winsB ? f.aId : winsB>winsA ? f.bId : "";
   f.decider.needed=false;
-  if(f.aId && f.bId){
+  f.winnerId="";
+  if(f.aId && f.bId && isComplete){
     if(winsA>winsB) f.winnerId=f.aId;
     else if(winsB>winsA) f.winnerId=f.bId;
-    else if(winsA+winsB>0){ f.decider.needed=true; f.winnerId=f.decider.winnerId||""; }
-    else f.winnerId="";
+    else { f.decider.needed=true; f.winnerId=f.decider.winnerId||""; }
   }
-  return {winsA,winsB,winnerId:f.winnerId};
+  return {winsA,winsB,winnerId:f.winnerId,provisionalWinnerId,isComplete,completedMatches,totalMatches:LEVELS.length,deciderNeeded:f.decider.needed};
 }
 
 function calculateAll(){
@@ -1413,7 +1477,7 @@ function renderTieEditor(tieObj, idx){
           <div class="matchup-title">${stageLabel(tieObj.stage, idx)}: ${esc(team(tieObj.aId).name)} vs ${esc(team(tieObj.bId).name)}</div>
           <div class="matchup-sub">Home & away · 3 level matches per leg · set-by-set scoring</div>
         </div>
-        <span class="pill ${c.winnerId?"green":c.ptsA===c.ptsB&&c.ptsA>0?"red":"blue"}">${c.winnerId ? `${team(c.winnerId).name} advances` : c.ptsA===c.ptsB&&c.ptsA>0 ? "Decider needed" : "Pending"}</span>
+        <span class="pill ${c.winnerId?"green":c.deciderNeeded?"red":"blue"}">${tieStatusLabel(c)}</span>
       </div>
       <div class="legs">
         ${tieObj.legs.map((leg,legIdx)=>renderLeg(tieObj,leg,legIdx)).join("")}
@@ -1421,8 +1485,8 @@ function renderTieEditor(tieObj, idx){
       <div class="summary">
         <div class="metric"><div class="n">${fmt(c.ptsA)}</div><div class="k">${esc(team(tieObj.aId).name)} points</div></div>
         <div class="metric"><div class="n">${fmt(c.ptsB)}</div><div class="k">${esc(team(tieObj.bId).name)} points</div></div>
-        <div class="metric"><div class="n">${tieObj.decider.needed?"YES":"NO"}</div><div class="k">Decider needed</div></div>
-        <div class="metric"><div class="n">${c.winnerId ? esc(team(c.winnerId).name) : "TBD"}</div><div class="k">Winner</div></div>
+        <div class="metric"><div class="n">${c.completedMatches}/${c.totalMatches}</div><div class="k">Results completed</div></div>
+        <div class="metric"><div class="n">${c.winnerId ? esc(team(c.winnerId).name) : c.provisionalWinnerId ? esc(team(c.provisionalWinnerId).name) : "TBD"}</div><div class="k">${c.isComplete ? "Winner" : "Provisional Winner"}</div></div>
       </div>
       ${tieObj.decider.needed ? renderDecider(tieObj) : ""}
     </div>
@@ -1516,7 +1580,7 @@ function renderFinalEditor(){
           <div class="matchup-title">${esc(team(f.aId).name)} vs ${esc(team(f.bId).name)}</div>
           <div class="matchup-sub">Enter each level match set by set</div>
         </div>
-        <span class="pill ${c.winnerId?"gold":"blue"}">${c.winnerId ? `${esc(team(c.winnerId).name)} champion` : "Pending"}</span>
+        <span class="pill ${c.winnerId?"gold":"blue"}">${c.winnerId ? `Winner: ${esc(team(c.winnerId).name)}` : c.provisionalWinnerId ? `On going · Provisional Winner: ${esc(team(c.provisionalWinnerId).name)}` : "On going"}</span>
       </div>
       <div class="levels">
         ${LEVELS.map(level=>renderFinalLevel(level)).join("")}
@@ -1524,8 +1588,8 @@ function renderFinalEditor(){
       <div class="summary">
         <div class="metric"><div class="n">${c.winsA}</div><div class="k">${esc(team(f.aId).name)} match wins</div></div>
         <div class="metric"><div class="n">${c.winsB}</div><div class="k">${esc(team(f.bId).name)} match wins</div></div>
-        <div class="metric"><div class="n">${f.decider.needed?"YES":"NO"}</div><div class="k">Decider needed</div></div>
-        <div class="metric"><div class="n">${c.winnerId ? esc(team(c.winnerId).name) : "TBD"}</div><div class="k">Champion</div></div>
+        <div class="metric"><div class="n">${c.completedMatches}/${c.totalMatches}</div><div class="k">Results completed</div></div>
+        <div class="metric"><div class="n">${c.winnerId ? esc(team(c.winnerId).name) : c.provisionalWinnerId ? esc(team(c.provisionalWinnerId).name) : "TBD"}</div><div class="k">${c.isComplete ? "Winner" : "Provisional Winner"}</div></div>
       </div>
       ${f.decider.needed ? `
       <div class="tie-box">
@@ -1589,7 +1653,7 @@ function renderBracketMatch(m){
       <div class="top"><span>${m.stage.toUpperCase()} ${m.id.replace(/[^0-9]/g,"")}</span><span>H/A</span></div>
       ${renderBracketTeam(a,m.aId===c.winnerId, `${fmt(c.ptsA)} pts`)}
       ${renderBracketTeam(b,m.bId===c.winnerId, `${fmt(c.ptsB)} pts`)}
-      <div class="br-foot"><span>L1 + L2 aggregate</span><span>${c.winnerId ? "Winner: "+team(c.winnerId).name : c.ptsA===c.ptsB&&c.ptsA>0 ? "Decider needed" : "Pending"}</span></div>
+      <div class="br-foot"><span>L1 + L2 aggregate · ${c.completedMatches}/${c.totalMatches} results</span><span>${tieStatusLabel(c)}</span></div>
     </div>
   `;
 }
@@ -1612,7 +1676,7 @@ function renderFinalBracket(){
       <div class="top"><span>Final</span><span>Unique match</span></div>
       ${renderBracketTeam(team(f.aId), f.aId===c.winnerId, `${c.winsA} wins`)}
       ${renderBracketTeam(team(f.bId), f.bId===c.winnerId, `${c.winsB} wins`)}
-      <div class="br-foot"><span>Best of 3 level matches</span><span>${c.winnerId ? "Champion: "+team(c.winnerId).name : "Pending"}</span></div>
+      <div class="br-foot"><span>Best of 3 level matches · ${c.completedMatches}/${c.totalMatches} results</span><span>${c.winnerId ? "Winner: "+team(c.winnerId).name : c.provisionalWinnerId ? "On going · Provisional Winner: "+team(c.provisionalWinnerId).name : "On going"}</span></div>
     </div>
   </div></div>`;
 }
@@ -1669,7 +1733,7 @@ function renderExportTie(match, idx){
     <div class="round-export-match">
       <div class="round-export-match-head">
         <span>${label}</span>
-        <span>${c.winnerId ? "Winner: " + esc(team(c.winnerId).name) : c.ptsA===c.ptsB && c.ptsA>0 ? "Decider needed" : "Pending"}</span>
+        <span>${tieStatusLabel(c)}</span>
       </div>
       <div class="round-export-teams">
         ${renderExportTeamBlock(a, match.aId===c.winnerId, `${fmt(c.ptsA)} pts`)}
@@ -1714,7 +1778,7 @@ function renderFinalExport(){
     <div class="round-export-match">
       <div class="round-export-match-head">
         <span>Final · One East</span>
-        <span>${c.winnerId ? "Champion: " + esc(team(c.winnerId).name) : "Pending"}</span>
+        <span>${c.winnerId ? "Winner: " + esc(team(c.winnerId).name) : c.provisionalWinnerId ? "On going · Provisional Winner: " + esc(team(c.provisionalWinnerId).name) : "On going"}</span>
       </div>
       <div class="round-export-teams">
         ${renderExportTeamBlock(team(f.aId), f.aId===c.winnerId, `${c.winsA} wins`)}
