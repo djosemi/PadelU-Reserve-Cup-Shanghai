@@ -92,3 +92,9 @@ v14 update:
   QF3: Jiuguang vs Capital Square
   QF4: SIFEC vs One East
 - The app enforces these QF pairings even if older Firebase/local data still contains the previous bracket.
+
+
+v15 update:
+- Replaced Jiuguang team logo with the new guitar logo.
+- Header title changed to RESERVE CUP SHANGHAI PLAYOFF.
+- Removed the header subtitle line.
